@@ -18,7 +18,7 @@ export default function Navbar({ status, onRefreshStatus, onOpenSettings }) {
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold tracking-tight text-white">HalloRAG</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 font-mono font-medium">
-                Java 25 • Spring Boot 3.4
+                Java 25 • Spring Boot 4.1.2
               </span>
             </div>
             <p className="text-xs text-slate-400">pgvector & Ollama RAG Intelligence</p>

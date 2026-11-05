@@ -1,6 +1,6 @@
-# HalloRAG: Java 25 & Spring Boot 3.4 RAG System with pgvector
+# HalloRAG: Java 25 & Spring Boot 4.1.2 RAG System with pgvector
 
-A complete, production-grade Retrieval-Augmented Generation (RAG) system built with **Spring Boot 3.4**, **Java 25**, **PostgreSQL 17 with pgvector**, **Ollama**, and a modern **React SPA**.
+A complete, production-grade Retrieval-Augmented Generation (RAG) system built with **Spring Boot 4.1.2**, **Java 25**, **PostgreSQL 17 with pgvector**, **Ollama**, and a modern **React SPA**.
 
 Everything runs entirely in Docker with **zero API keys required** — 100% self-hosted, private, and local.
 
