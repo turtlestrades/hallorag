@@ -58,6 +58,15 @@ services:
     networks:
       - rag-network
 
+  # Bridges host.docker.internal (172.17.0.1:11434) to host loopback (127.0.0.1:11434)
+  # so host Ollama does not need to be reconfigured from its default 127.0.0.1 binding.
+  ollama-bridge:
+    image: alpine/socat:latest
+    container_name: hallorag-ollama-bridge
+    restart: unless-stopped
+    network_mode: host
+    command: TCP-LISTEN:11434,bind=172.17.0.1,reuseaddr,fork TCP:127.0.0.1:11434
+
   # --- Optional: Containerized Ollama (Use only if host Ollama is not installed) ---
   # Start with: docker compose --profile container-ollama up
   ollama:

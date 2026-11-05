@@ -11,9 +11,10 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -26,6 +27,9 @@ public class RagService {
     private final VectorStore vectorStore;
     private final ChatModel chatModel;
     private final RagProperties ragProperties;
+
+    @Value("${spring.ai.ollama.chat.options.model:llama3.2:3b}")
+    private String chatModelName;
 
     public RagService(VectorStore vectorStore, ChatModel chatModel, RagProperties ragProperties) {
         this.vectorStore = vectorStore;
@@ -121,7 +125,10 @@ public class RagService {
 
         Prompt prompt = template.create(
                 promptVars,
-                ChatOptions.builder().temperature(temperature).build()
+                OllamaChatOptions.builder()
+                        .model(chatModelName)
+                        .temperature(temperature)
+                        .build()
         );
 
         // 5. Invoke LLM
