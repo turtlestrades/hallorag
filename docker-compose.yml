@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: hallorag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ragdb}
+      POSTGRES_USER: ${DB_USER:-raguser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ragpassword}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-raguser} -d ${DB_NAME:-ragdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hallorag-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      # Allows backend container on Linux/macOS to connect to host's native Ollama
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ragdb}
+      DB_USER: ${DB_USER:-raguser}
+      DB_PASSWORD: ${DB_PASSWORD:-ragpassword}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      CHAT_MODEL: ${CHAT_MODEL:-llama3.2:3b}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+    networks:
+      - rag-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hallorag-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - rag-network
+
+  # --- Optional: Containerized Ollama (Use only if host Ollama is not installed) ---
+  # Start with: docker compose --profile container-ollama up
+  ollama:
+    image: ollama/ollama:latest
+    container_name: hallorag-ollama
+    profiles:
+      - container-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - rag-network
+
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: hallorag-ollama-init
+    profiles:
+      - container-ollama
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - rag-network
+    entrypoint:
+      - "sh"
+      - "-c"
+      - |
+        echo "Pulling models into containerized Ollama..."
+        curl -s -X POST http://ollama:11434/api/pull -d '{"name": "nomic-embed-text", "stream": false}'
+        curl -s -X POST http://ollama:11434/api/pull -d '{"name": "llama3.2:3b", "stream": false}'
+        echo "Models ready!"
+
+networks:
+  rag-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  ollama_data:
